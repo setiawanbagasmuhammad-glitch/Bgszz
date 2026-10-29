@@ -1,0 +1,1497 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kutilang Melesat</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Figtree:wght@600;700&display=swap">
+<style>
+/* Layout: satu layar penuh. Kanvas 9:16 diskalakan pas di tengah, pemilih skin menempel di atas tanah, tombol suara di pojok kanan atas.
+   Dunia visual: pagi berkabut yang tenang di atas gunung berapi, cahaya hangat agak terang dan sayu, rumpun bambu sebagai rintangan, tiga musuh (lebah, kelelawar, elang).
+   Palet pastel berkontras lembut; panel UI tetap gelap-teduh supaya teks mudah dibaca. */
+:root {
+  --night: #2c4a57;
+  --sky-top: #6fa6c2;
+  --sky-mid: #a9d0cf;
+  --sky-low: #f7cf9a;
+  --sun: #fff6dc;
+  --cloud: rgba(255, 255, 255, 0.5);
+  --smoke: rgba(255, 255, 255, 0.42);
+  --ridge-far: #9ec6c0;
+  --volcano: #6fa3a2;
+  --volcano-shade: #5d8f91;
+  --ridge-near: #5c9490;
+  --bamboo: #8fcf80;
+  --bamboo-dark: #4fa468;
+  --bamboo-node: #3f8a58;
+  --bamboo-hi: #eaf8d8;
+  --leaf: #6fc06a;
+  --soil: #9a6f4a;
+  --soil-dark: #865c3d;
+  --grass: #7cc86d;
+  --grass-dark: #5ab25a;
+  --ink: #fff8ea;
+  --ink-shadow: #3a5a68;
+  --outline: rgba(52, 80, 94, 0.62);
+  --panel: rgba(44, 74, 87, 0.92);
+  --panel-soft: rgba(44, 74, 87, 0.84);
+  --panel-line: rgba(166, 213, 156, 0.5);
+  --chip: rgba(255, 248, 234, 0.1);
+  --chip-line: rgba(255, 248, 234, 0.26);
+  --chip-on: rgba(166, 213, 156, 0.26);
+  --warn: #f0836a;
+  --bee: #f6cf5a;
+  --bee-dark: #3b3430;
+  --bee-wing: rgba(255, 255, 255, 0.85);
+  --bat: #7a6ba3;
+  --bat-wing: #a393c8;
+  --hawk-body: #c2764a;
+  --hawk-wing: #a85f38;
+  --hawk-head: #fff8ea;
+  --hawk-tip: #2b1d16;
+  --font-display: "Bagel Fat One", "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  --font-body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+html { box-sizing: border-box; height: 100%; }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+  overscroll-behavior: none;
+  padding-block: 8px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  background: var(--night);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+#wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#stage {
+  position: relative;
+  --u: 1px;
+  line-height: 0;
+  touch-action: none;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--sky-top);
+  box-shadow: 0 0 0 1px rgba(255, 242, 207, 0.14), 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+canvas#game { display: block; width: 100%; height: 100%; cursor: pointer; }
+
+/* Pemilih skin: papan kecil di atas tanah. Ukuran mengikuti skala kanvas lewat --u (1 satuan = 1 piksel kanvas). */
+#picker {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--u) * 110);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 6);
+  padding: calc(var(--u) * 8) calc(var(--u) * 10);
+  border-radius: calc(var(--u) * 18);
+  background: var(--panel);
+  box-shadow: 0 0 0 1px var(--panel-line);
+  line-height: 1;
+}
+#skinName {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: calc(var(--u) * 14);
+  letter-spacing: 0.03em;
+  color: var(--ink);
+}
+#skinRow { display: grid; grid-template-columns: repeat(6, calc(var(--u) * 38)); gap: calc(var(--u) * 6); }
+.chip {
+  width: calc(var(--u) * 38);
+  height: calc(var(--u) * 38);
+  display: block;
+  padding: 0;
+  border: 2px solid var(--chip-line);
+  border-radius: 50%;
+  background: var(--chip);
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease, background-color 0.12s ease;
+}
+.chip canvas { display: block; width: 100%; height: 100%; border-radius: 50%; }
+.chip[aria-pressed="true"] { border-color: var(--bamboo); background: var(--chip-on); transform: scale(1.08); }
+.chip:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+#sound {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
+#sound svg { width: 22px; height: 22px; }
+#sound.muted .on { display: none; }
+#sound:not(.muted) .off { display: none; }
+#sound:focus-visible { outline: 3px solid var(--bamboo); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .chip { transition: none; } }
+</style>
+
+<div id="wrap">
+  <div id="stage">
+    <canvas id="game" role="img" aria-label="Permainan Kutilang Melesat. Ketuk layar atau tekan Spasi untuk mengepak, lewati celah di antara rumpun bambu, dan hindari lebah, kelelawar, dan elang."></canvas>
+    <div id="picker" role="group" aria-label="Pilih skin burung">
+      <div id="skinName"></div>
+      <div id="skinRow"></div>
+    </div>
+    <button id="sound" type="button" aria-label="Matikan suara" title="Suara">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z" fill="currentColor"/>
+        <g class="on"><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></g>
+        <g class="off"><path d="M16 9.5l5 5"/><path d="M21 9.5l-5 5"/></g>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<script>
+function start(data) {
+  'use strict';
+  data = data || {};
+
+  var cs = getComputedStyle(document.documentElement);
+  function tok(n) { return cs.getPropertyValue(n).trim(); }
+  var C = {
+    skyTop: tok('--sky-top'), skyMid: tok('--sky-mid'), skyLow: tok('--sky-low'),
+    sun: tok('--sun'), cloud: tok('--cloud'), smoke: tok('--smoke'),
+    ridgeFar: tok('--ridge-far'), ridgeNear: tok('--ridge-near'),
+    volcano: tok('--volcano'), volcanoShade: tok('--volcano-shade'),
+    bamboo: tok('--bamboo'), bambooDark: tok('--bamboo-dark'), bambooNode: tok('--bamboo-node'),
+    bambooHi: tok('--bamboo-hi'), leaf: tok('--leaf'),
+    soil: tok('--soil'), soilDark: tok('--soil-dark'), grass: tok('--grass'), grassDark: tok('--grass-dark'),
+    ink: tok('--ink'), inkShadow: tok('--ink-shadow'), outline: tok('--outline'),
+    panel: tok('--panel'), panelSoft: tok('--panel-soft'), panelLine: tok('--panel-line'), warn: tok('--warn'),
+    bee: tok('--bee'), beeDark: tok('--bee-dark'), beeWing: tok('--bee-wing'),
+    bat: tok('--bat'), batWing: tok('--bat-wing'),
+    hawkBody: tok('--hawk-body'), hawkWing: tok('--hawk-wing'), hawkHead: tok('--hawk-head'), hawkTip: tok('--hawk-tip')
+  };
+  var DISPLAY = tok('--font-display');
+  var BODY = tok('--font-body');
+
+  try {
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load('32px "Bagel Fat One"');
+      document.fonts.load('700 16px "Figtree"');
+    }
+  } catch (e) {}
+
+  var wrap = document.getElementById('wrap');
+  var stage = document.getElementById('stage');
+  var cv = document.getElementById('game');
+  var ctx = cv.getContext('2d');
+  var soundBtn = document.getElementById('sound');
+  var picker = document.getElementById('picker');
+  var skinRow = document.getElementById('skinRow');
+  var skinName = document.getElementById('skinName');
+
+  var W = 360, H = 640, GROUND = 96, PLAY = H - GROUND;
+  var G = 1650, FLAP = -440, MAXFALL = 620;
+  var BASE_SPEED = 140, PW = 54, SPACING = 230, FIRST_X = W + 120;
+  var FREE = SPACING - PW;     // lebar ruang bebas di antara dua rumpun bambu
+  var LEAD = 1.0, WARN = 0.9;  // elang: detik dari lepas landas sampai lewat, dan lama peringatan
+  var reduced = false;
+  try { reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) {}
+
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+  var sx = 1, sy = 1;
+  function fit() {
+    var r = wrap.getBoundingClientRect();
+    var s = Math.max(0.3, Math.min(r.width / W, r.height / H, 1.6));
+    var dpr = Math.min(window.devicePixelRatio || 1, 3);
+    var pw = Math.floor(W * s), ph = Math.floor(H * s);
+    stage.style.width = pw + 'px';
+    stage.style.height = ph + 'px';
+    stage.style.setProperty('--u', (pw / W) + 'px');
+    cv.width = Math.round(pw * dpr);
+    cv.height = Math.round(ph * dpr);
+    sx = cv.width / W;
+    sy = cv.height / H;
+  }
+  fit();
+  window.addEventListener('resize', fit);
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(wrap);
+
+  /* ---------- skin burung ---------- */
+  var SKINS = [
+    { id: 'kutilang', name: 'Kutilang', body: '#9a8472', wing: '#6c5a4a', belly: '#f4ede3', head: '#2a2522',
+      beak: '#f08c2e', vent: '#d9472b', tailC: '#6c5a4a', crest: 'tuft', tail: 'short' },
+    { id: 'jalak', name: 'Jalak Bali', body: '#f7f4ee', wing: '#ffffff', wingTip: '#2c2f3a', belly: '#ffffff', head: '#f7f4ee',
+      beak: '#f2c230', patch: '#47a8e0', tailC: '#ffffff', tailTip: '#2c2f3a', crest: 'long', tail: 'short' },
+    { id: 'kenari', name: 'Kenari', body: '#ffd23f', wing: '#f0a21a', belly: '#fff0a6', head: '#ffd23f',
+      beak: '#f08c2e', tailC: '#f0a21a', crest: 'none', tail: 'short' },
+    { id: 'murai', name: 'Murai Batu', body: '#1f2733', wing: '#121821', belly: '#e8742a', head: '#1f2733',
+      beak: '#4a5262', tailC: '#121821', tailTip: '#ffffff', crest: 'none', tail: 'long' },
+    { id: 'cendrawasih', name: 'Cendrawasih', body: '#8b2f2c', wing: '#6a2020', belly: '#b9512f', head: '#f3c44a',
+      beak: '#5b86b8', patch: '#1f7a52', tailC: '#f3c44a', crest: 'none', tail: 'plume' },
+    { id: 'nuri', name: 'Nuri', body: '#d9362b', wing: '#2a9d5c', belly: '#ef6a3c', head: '#d9362b',
+      beak: '#ffc84a', tailC: '#2a9d5c', crest: 'none', tail: 'short' },
+    { id: 'gelatik', name: 'Gelatik Jawa', body: '#8e9aa8', wing: '#6f7b89', belly: '#b4bec9', head: '#2b2f38',
+      beak: '#f08fa0', patch: '#ffffff', tailC: '#2b2f38', crest: 'none', tail: 'short' },
+    { id: 'cekakak', name: 'Cekakak', body: '#2f8fd0', wing: '#1f6fb0', belly: '#f0a24a', head: '#1f5f9f',
+      beak: '#e2453a', patch: '#f7f0e0', tailC: '#1f6fb0', crest: 'none', tail: 'short' },
+    { id: 'merpati', name: 'Merpati', body: '#b7bec9', wing: '#8a93a1', belly: '#dfe3ea', head: '#b7bec9',
+      beak: '#e9c9b3', patch: '#3fb08f', tailC: '#8a93a1', tailTip: '#4a5260', crest: 'none', tail: 'short' },
+    { id: 'madu', name: 'Burung Madu', body: '#6b7b2e', wing: '#46531f', belly: '#f3d24a', head: '#2f7f96',
+      beak: '#2b2b2b', tailC: '#2f7f96', crest: 'none', tail: 'long' },
+    { id: 'kakatua', name: 'Kakatua', body: '#fbf7f0', wing: '#efe7d8', belly: '#ffffff', head: '#fbf7f0', crestC: '#ffd23f',
+      beak: '#6a6f78', tailC: '#efe7d8', crest: 'long', tail: 'short' },
+    { id: 'cucak', name: 'Cucak Hijau', body: '#7fbf4a', wing: '#4f9a34', belly: '#d2e68e', head: '#7fbf4a',
+      beak: '#3a3a3a', patch: '#2f80d0', tailC: '#4f9a34', crest: 'none', tail: 'short' }
+  ];
+
+  /* ---------- penyimpanan ---------- */
+  var best = 0, muted = false, skinIdx = 0;
+  try { best = parseInt(localStorage.getItem('kutilang-best') || '0', 10) || 0; } catch (e) {}
+  try { muted = localStorage.getItem('kutilang-muted') === '1'; } catch (e) {}
+  function skinIndexOf(id) {
+    for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) return i;
+    return -1;
+  }
+  try {
+    var savedSkin = skinIndexOf(localStorage.getItem('kutilang-skin'));
+    if (savedSkin >= 0) skinIdx = savedSkin;
+  } catch (e) {}
+  if (data.skin) {
+    var hotSkin = skinIndexOf(data.skin);
+    if (hotSkin >= 0) skinIdx = hotSkin;
+  }
+  try {
+    var hot = window.claude && window.claude.hot;
+    if (hot && typeof hot.snapshot === 'function') hot.snapshot(function () { return { skin: SKINS[skinIdx].id }; });
+  } catch (e) {}
+
+  /* ---------- suara ---------- */
+  var actx = null;
+  function unlockAudio() {
+    if (muted) return;
+    try {
+      if (!actx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) actx = new AC();
+      }
+      if (actx && actx.state === 'suspended') actx.resume();
+      musicStart();
+    } catch (e) {}
+  }
+  function tone(f0, f1, dur, type, vol, delay) {
+    if (!actx || muted) return;
+    try {
+      var t0 = actx.currentTime + (delay || 0);
+      var o = actx.createOscillator();
+      var g = actx.createGain();
+      o.type = type;
+      o.frequency.setValueAtTime(f0, t0);
+      o.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+      g.gain.setValueAtTime(vol, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+      o.connect(g);
+      g.connect(actx.destination);
+      o.start(t0);
+      o.stop(t0 + dur + 0.02);
+    } catch (e) {}
+  }
+  function sfx(k) {
+    if (k === 'flap') tone(380, 640, 0.11, 'triangle', 0.12);
+    else if (k === 'score') { tone(660, 660, 0.08, 'square', 0.05); tone(990, 990, 0.13, 'square', 0.05, 0.08); }
+    else if (k === 'hit') tone(240, 50, 0.3, 'sawtooth', 0.13);
+    else if (k === 'pick') tone(520, 820, 0.09, 'triangle', 0.1);
+    else if (k === 'screech') { tone(1500, 820, 0.2, 'sawtooth', 0.04); tone(1350, 760, 0.2, 'sawtooth', 0.04, 0.24); }
+  }
+  /* ---------- musik latar: pad lembut + denting pentatonik, dibuat langsung dengan WebAudio ---------- */
+  var CHORDS = [
+    [130.81, 164.81, 196.0, 246.94],   // Cmaj7
+    [110.0, 164.81, 196.0, 261.63],    // Am7
+    [174.61, 220.0, 261.63, 329.63],   // Fmaj7
+    [98.0, 146.83, 246.94, 329.63]     // G6
+  ];
+  var PENTA = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+  var BAR = 8, BEAT = 0.8;
+  var music = { on: false, ready: false, bus: null, pads: null, wet: null, timer: null, nextBar: 0, nextBeat: 0, bar: 0, last: -1 };
+
+  function musicBuild() {
+    if (music.ready || !actx) return;
+    music.bus = actx.createGain();
+    music.bus.gain.value = 0;
+    music.bus.connect(actx.destination);
+    // pad lewat lowpass supaya hangat
+    music.pads = actx.createBiquadFilter();
+    music.pads.type = 'lowpass';
+    music.pads.frequency.value = 800;
+    music.pads.connect(music.bus);
+    // gema lembut untuk denting
+    music.wet = actx.createGain();
+    music.wet.gain.value = 0.55;
+    var dly = actx.createDelay(1.5);
+    dly.delayTime.value = 0.55;
+    var fb = actx.createGain();
+    fb.gain.value = 0.42;
+    var lp = actx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 1700;
+    music.wet.connect(dly);
+    dly.connect(lp);
+    lp.connect(fb);
+    fb.connect(dly);
+    lp.connect(music.bus);
+    music.ready = true;
+  }
+  function padVoice(f, t0, dur) {
+    for (var d = -1; d <= 1; d += 2) {
+      var o = actx.createOscillator();
+      var g = actx.createGain();
+      o.type = 'triangle';
+      o.frequency.value = f;
+      o.detune.value = d * 5;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.linearRampToValueAtTime(0.03, t0 + 2.2);
+      g.gain.setValueAtTime(0.03, t0 + dur - 2.4);
+      g.gain.linearRampToValueAtTime(0.0001, t0 + dur + 1.2);
+      o.connect(g);
+      g.connect(music.pads);
+      o.start(t0);
+      o.stop(t0 + dur + 1.3);
+    }
+  }
+  function pluck(f, t0) {
+    var o = actx.createOscillator();
+    var g = actx.createGain();
+    o.type = 'sine';
+    o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.linearRampToValueAtTime(0.06, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.7);
+    o.connect(g);
+    g.connect(music.bus);
+    g.connect(music.wet);
+    o.start(t0);
+    o.stop(t0 + 1.8);
+  }
+  function musicTick() {
+    if (!music.on || !actx) return;
+    var now = actx.currentTime;
+    while (music.nextBar < now + 1.5) {
+      var ch = CHORDS[music.bar % CHORDS.length];
+      for (var i = 0; i < ch.length; i++) padVoice(ch[i], music.nextBar, BAR);
+      music.bar++;
+      music.nextBar += BAR;
+    }
+    while (music.nextBeat < now + 1.5) {
+      if (Math.random() < 0.45) {
+        var n = (Math.random() * PENTA.length) | 0;
+        if (n === music.last) n = (n + 2) % PENTA.length;
+        music.last = n;
+        pluck(PENTA[n], music.nextBeat);
+      }
+      music.nextBeat += BEAT;
+    }
+  }
+  function musicStart() {
+    if (!actx || muted || music.on) return;
+    try {
+      musicBuild();
+      var now = actx.currentTime;
+      music.on = true;
+      music.nextBar = now + 0.1;
+      music.nextBeat = now + 1.2;
+      music.bus.gain.cancelScheduledValues(now);
+      music.bus.gain.setValueAtTime(music.bus.gain.value, now);
+      music.bus.gain.linearRampToValueAtTime(0.9, now + 2.5);
+      musicTick();
+      music.timer = setInterval(musicTick, 300);
+    } catch (e) {}
+  }
+  function musicStop() {
+    if (!music.on) return;
+    music.on = false;
+    clearInterval(music.timer);
+    try {
+      var now = actx.currentTime;
+      music.bus.gain.cancelScheduledValues(now);
+      music.bus.gain.setValueAtTime(music.bus.gain.value, now);
+      music.bus.gain.linearRampToValueAtTime(0, now + 0.4);
+    } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (!actx) return;
+    try {
+      if (document.hidden) actx.suspend();
+      else if (!muted) actx.resume();
+    } catch (e) {}
+  });
+
+  function paintSoundBtn() {
+    soundBtn.classList.toggle('muted', muted);
+    soundBtn.setAttribute('aria-label', muted ? 'Nyalakan suara' : 'Matikan suara');
+  }
+  paintSoundBtn();
+  soundBtn.addEventListener('click', function (e) {
+    muted = !muted;
+    try { localStorage.setItem('kutilang-muted', muted ? '1' : '0'); } catch (err) {}
+    paintSoundBtn();
+    if (muted) musicStop();
+    if (!muted) { unlockAudio(); sfx('flap'); }
+    if (e.detail !== 0) soundBtn.blur();
+  });
+
+  /* ---------- gambar burung (dipakai di layar dan di tombol skin) ---------- */
+  function shapePath(c, k, sk, L) {
+    c.beginPath();
+    if (k === 'tail') {
+      c.moveTo(-12, -3); c.lineTo(-L, -8); c.lineTo(-L + 2, 4); c.lineTo(-12, 5); c.closePath();
+    } else if (k === 'body') {
+      c.ellipse(0, 0, 17, 13, 0, 0, 6.283);
+    } else if (k === 'head') {
+      c.arc(8, -7, 9.5, 0, 6.283);
+    } else if (k === 'crest') {
+      if (sk.crest === 'long') {
+        c.moveTo(0, -13); c.lineTo(-10, -28); c.lineTo(4, -18); c.lineTo(5, -31); c.lineTo(11, -15);
+      } else {
+        c.moveTo(1, -14); c.lineTo(0, -22); c.lineTo(6, -16); c.lineTo(8, -23); c.lineTo(11, -16);
+      }
+      c.closePath();
+    } else if (k === 'beak') {
+      c.moveTo(16, -9); c.lineTo(27, -4); c.lineTo(16, -1); c.closePath();
+    }
+  }
+
+  function drawBirdSkin(c, sk, wingAng, dead, sway) {
+    var L = sk.tail === 'long' ? 46 : 31;
+    var keys = [];
+    if (sk.tail !== 'plume') keys.push('tail');
+    keys.push('body', 'head');
+    if (sk.crest !== 'none') keys.push('crest');
+    keys.push('beak');
+    var fills = { tail: sk.tailC, body: sk.body, head: sk.head, crest: sk.crestC || sk.head, beak: sk.beak };
+    var i;
+
+    c.save();
+    c.lineJoin = 'round';
+
+    // ekor panjang berbentuk pita (cendrawasih)
+    if (sk.tail === 'plume') {
+      c.lineCap = 'round';
+      var plumes = [
+        [-11, 1, -34, -9 + sway, -57, 9 + sway * 1.4],
+        [-11, 3, -33, 11 - sway, -52, 27 - sway * 1.2]
+      ];
+      for (i = 0; i < plumes.length; i++) {
+        var pl = plumes[i];
+        c.beginPath();
+        c.moveTo(pl[0], pl[1]);
+        c.quadraticCurveTo(pl[2], pl[3], pl[4], pl[5]);
+        c.lineWidth = 6.4; c.strokeStyle = C.outline; c.stroke();
+        c.lineWidth = 3.6; c.strokeStyle = sk.tailC; c.stroke();
+      }
+      c.lineCap = 'butt';
+    }
+
+    // garis tepi hanya di sisi luar gabungan bentuk: semua garis dulu, lalu semua isi
+    c.lineWidth = 3.4;
+    c.strokeStyle = C.outline;
+    for (i = 0; i < keys.length; i++) { shapePath(c, keys[i], sk, L); c.stroke(); }
+    for (i = 0; i < keys.length; i++) { shapePath(c, keys[i], sk, L); c.fillStyle = fills[keys[i]]; c.fill(); }
+
+    // ujung ekor
+    if (sk.tailTip && sk.tail !== 'plume') {
+      var f = 0.78;
+      var ty = -3 + (-8 - -3) * f, py = 5 + (4 - 5) * f, tx = -12 + (-L + 12) * f;
+      c.beginPath();
+      c.moveTo(tx, ty); c.lineTo(-L, -8); c.lineTo(-L + 2, 4); c.lineTo(tx, py); c.closePath();
+      c.fillStyle = sk.tailTip; c.fill();
+    }
+    // jambul merah di bawah ekor
+    if (sk.vent) {
+      c.fillStyle = sk.vent;
+      c.beginPath(); c.ellipse(-14, 8, 6, 3.5, 0.3, 0, 6.283); c.fill();
+    }
+    // perut
+    c.fillStyle = sk.belly;
+    c.beginPath(); c.ellipse(3, 6, 12, 6.5, 0, 0, 6.283); c.fill();
+    // bercak wajah
+    if (sk.patch) {
+      c.fillStyle = sk.patch;
+      c.beginPath(); c.ellipse(11.5, -7.5, 6.2, 5.4, 0, 0, 6.283); c.fill();
+    }
+    // mata
+    if (dead) {
+      c.lineWidth = 1.8; c.lineCap = 'round'; c.strokeStyle = C.inkShadow;
+      c.beginPath();
+      c.moveTo(9.8, -10.2); c.lineTo(14.2, -5.8);
+      c.moveTo(14.2, -10.2); c.lineTo(9.8, -5.8);
+      c.stroke();
+      c.lineCap = 'butt';
+    } else {
+      c.fillStyle = C.ink;
+      c.beginPath(); c.arc(12, -8, 3.4, 0, 6.283); c.fill();
+      c.fillStyle = C.inkShadow;
+      c.beginPath(); c.arc(13, -8, 1.6, 0, 6.283); c.fill();
+    }
+    // sayap
+    c.save();
+    c.translate(-5, 0);
+    c.rotate(wingAng);
+    c.beginPath(); c.ellipse(-3, 2, 12, 6, -0.15, 0, 6.283);
+    c.fillStyle = sk.wing; c.fill();
+    c.lineWidth = 1.5; c.strokeStyle = C.outline; c.stroke();
+    if (sk.wingTip) {
+      c.fillStyle = sk.wingTip;
+      c.beginPath(); c.ellipse(-11.5, 2.6, 4, 4.2, 0, 0, 6.283); c.fill();
+    }
+    c.restore();
+
+    c.restore();
+  }
+
+  /* ---------- pemilih skin ---------- */
+  var chips = [];
+  function paintChip(cn, sk) {
+    var c = cn.getContext('2d');
+    var L = sk.tail === 'plume' ? 57 : (sk.tail === 'long' ? 46 : 31);
+    var sc = Math.min(1.35, 78 / (L + 27));
+    var cx = (27 - L) / 2;
+    c.clearRect(0, 0, 96, 96);
+    c.save();
+    c.translate(48 - sc * cx, 49 + sc * 2);
+    c.scale(sc, sc);
+    drawBirdSkin(c, sk, 0.25, false, 0);
+    c.restore();
+  }
+  function paintSkinUI() {
+    skinName.textContent = SKINS[skinIdx].name;
+    for (var i = 0; i < chips.length; i++) chips[i].setAttribute('aria-pressed', i === skinIdx ? 'true' : 'false');
+  }
+  function setSkin(i) {
+    i = ((i % SKINS.length) + SKINS.length) % SKINS.length;
+    if (i === skinIdx) return;
+    skinIdx = i;
+    try { localStorage.setItem('kutilang-skin', SKINS[i].id); } catch (e) {}
+    paintSkinUI();
+    sfx('pick');
+  }
+  SKINS.forEach(function (sk, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.setAttribute('aria-label', 'Skin ' + sk.name);
+    var cn = document.createElement('canvas');
+    cn.width = 96; cn.height = 96;
+    b.appendChild(cn);
+    paintChip(cn, sk);
+    b.addEventListener('click', function (e) {
+      unlockAudio();
+      setSkin(i);
+      if (e.detail !== 0) b.blur();
+    });
+    skinRow.appendChild(b);
+    chips.push(b);
+  });
+  paintSkinUI();
+
+  /* ---------- state permainan ---------- */
+  var bird = { x: 96, y: PLAY * 0.45, vy: 0, rot: 0, r: 12 };
+  var state = 'ready'; // ready | play | dead
+  var pipes = [], foes = [], parts = [];
+  var score = 0, newBest = false, speed = BASE_SPEED, lastGapY = PLAY * 0.5;
+  var pipeCount = 0, hawkCool = 0, lastWasEv = false, cause = 'tanah';
+  var notice = { text: '', t: 0 }, seen = {};
+  var t = 0, flapT = 9, deadT = 0, flashT = 0, shakeT = 0, scorePop = 0;
+  var groundX = 0, farX = 0, nearX = 0;
+  var landed = false;
+
+  var TITLE = { tanah: 'Jatuh!', bambu: 'Menabrak!', bee: 'Disengat!', bat: 'Tertabrak!', hawk: 'Disambar!' };
+  var CAUSE = { tanah: 'jatuh ke tanah', bambu: 'menabrak bambu', bee: 'disengat lebah', bat: 'ditabrak kelelawar', hawk: 'disambar elang' };
+  var NOTE = { bee: 'Awas lebah!', bat: 'Awas kelelawar!', hawk: 'Awas elang!' };
+
+  function reset() {
+    pipes = [];
+    foes = [];
+    parts = [];
+    score = 0;
+    newBest = false;
+    speed = BASE_SPEED;
+    lastGapY = PLAY * 0.5;
+    pipeCount = 0;
+    hawkCool = 0;
+    lastWasEv = false;
+    notice.t = 0;
+    bird.y = PLAY * 0.45;
+    bird.vy = 0;
+    bird.rot = 0;
+    landed = false;
+    deadT = 0;
+    state = 'ready';
+  }
+
+  function puff() {
+    if (reduced) return;
+    for (var i = 0; i < 3; i++) {
+      parts.push({ type: 'puff', x: bird.x - 16 - i * 3, y: bird.y + 7 + Math.random() * 4,
+        vx: -speed * 0.5 - Math.random() * 40, vy: 20 + Math.random() * 30, g: 0,
+        r: 2 + Math.random() * 1.6, life: 0.35, max: 0.35, a: 0.55 });
+    }
+  }
+  function feathers() {
+    if (reduced) return;
+    var sk = SKINS[skinIdx], cols = [sk.body, sk.wing, sk.belly, sk.head];
+    for (var i = 0; i < 12; i++) {
+      parts.push({ type: 'feather', x: bird.x, y: bird.y, vx: (Math.random() - 0.5) * 340, vy: -60 - Math.random() * 240,
+        g: 900, r: 2.6 + Math.random() * 2.2, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 12,
+        color: cols[i % cols.length], life: 0.9, max: 0.9, a: 1 });
+    }
+  }
+  function updateParts(dt) {
+    for (var i = parts.length - 1; i >= 0; i--) {
+      var p = parts[i];
+      p.life -= dt;
+      if (p.life <= 0) { parts.splice(i, 1); continue; }
+      p.vy += p.g * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      if (p.type === 'feather') p.rot += p.vr * dt;
+    }
+  }
+
+  function flap() {
+    bird.vy = FLAP;
+    flapT = 0;
+    puff();
+    sfx('flap');
+  }
+  function die(c) {
+    if (state === 'dead') return;
+    state = 'dead';
+    cause = c;
+    deadT = 0;
+    landed = false;
+    flashT = 0.22;
+    shakeT = 0.25;
+    if (c !== 'tanah' && c !== 'bambu') bird.vy = -200;
+    feathers();
+    sfx('hit');
+    if (score > best) {
+      best = score;
+      newBest = true;
+      try { localStorage.setItem('kutilang-best', String(best)); } catch (e) {}
+    }
+  }
+  function press() {
+    unlockAudio();
+    if (state === 'ready') { state = 'play'; flap(); }
+    else if (state === 'play') { flap(); }
+    else if (deadT > 0.55) { reset(); state = 'play'; flap(); }
+  }
+
+  cv.addEventListener('pointerdown', function (e) { e.preventDefault(); press(); });
+  window.addEventListener('keydown', function (e) {
+    var onBtn = e.target && e.target.closest && e.target.closest('button');
+    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+      if (state === 'ready' || (state === 'dead' && deadT > 0.5)) {
+        e.preventDefault();
+        unlockAudio();
+        setSkin(skinIdx + (e.code === 'ArrowRight' ? 1 : -1));
+      }
+      return;
+    }
+    var go = e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowUp' || e.code === 'KeyW';
+    if (!go) return;
+    if (onBtn && (e.code === 'Space' || e.code === 'Enter')) return;
+    e.preventDefault();
+    if (!e.repeat) press();
+  });
+
+  /* ---------- rintangan dan musuh ---------- */
+  function spawn(x) {
+    var gap = Math.max(150, 170 - score * 1.2);
+    var min = gap / 2 + 56, max = PLAY - gap / 2 - 56;
+    var y = min + Math.random() * (max - min);
+    y = Math.max(lastGapY - 150, Math.min(lastGapY + 150, y));
+    y = Math.max(min, Math.min(max, y));
+    var prevY = lastGapY;
+    lastGapY = y;
+    pipes.push({ x: x, w: PW, gapY: y, gap: gap, passed: false });
+    planZone(x, prevY, y, pipeCount++);
+  }
+
+  // Musuh hanya muncul di ruang bebas antara dua rumpun bambu, jadi selalu ada jalan untuk menghindar.
+  function planZone(px, prevY, gy, n) {
+    if (hawkCool > 0) hawkCool--;
+    if (n < 3 || Math.random() > (lastWasEv ? 0.3 : 0.55)) { lastWasEv = false; return; }
+    lastWasEv = true;
+    var pool = ['bee', 'bee'];
+    if (n >= 8) pool.push('bat', 'bat');
+    if (n >= 12 && hawkCool <= 0) pool.push('hawk', 'hawk');
+    var kind = pool[(Math.random() * pool.length) | 0];
+    var cx = px - FREE / 2;
+    var mid = clamp((prevY + gy) / 2, 80, PLAY - 80);
+    var i;
+    if (kind === 'hawk') {
+      hawkCool = 3;
+      foes.push({ type: 'hawk', ax: cx, y: clamp(mid + (Math.random() - 0.5) * 30, 44, PLAY - 44),
+        st: 0, warnT: 0, x: W + 60, vx: 0 });
+    } else if (kind === 'bee') {
+      var count = (n >= 9 && Math.random() < 0.5) ? 2 : 1;
+      for (i = 0; i < count; i++) {
+        foes.push({ type: 'bee', x: cx + i * 28, by: mid, amp: 44 + Math.random() * 14, y: mid,
+          ph: Math.random() * 6.28 + i * 1.6, w: 4.2 + Math.random() * 0.8, r: 8, seen: false });
+      }
+    } else {
+      foes.push({ type: 'bat', x: cx, by: mid, amp: 84, y: mid, ph: Math.random() * 6.28, w: 1.9, r: 11, seen: false });
+    }
+  }
+
+  function announce(k) {
+    if (seen[k]) return;
+    seen[k] = true;
+    notice.text = NOTE[k];
+    notice.t = 1.8;
+  }
+  function near(x, y, r) {
+    var dx = bird.x - x, dy = bird.y - y, rr = bird.r + r - 2;
+    return dx * dx + dy * dy < rr * rr;
+  }
+  function foeX(f) { return f.type === 'bee' ? f.x + Math.sin(t * 3 + f.ph) * 5 : f.x; }
+  function hitFoe(f) {
+    if (f.type === 'hawk') {
+      if (f.st !== 2) return false;
+      return near(f.x - 9, f.y, 10) || near(f.x + 9, f.y, 10);
+    }
+    return near(foeX(f), f.y, f.r);
+  }
+
+  function updateFoes(dt) {
+    for (var i = foes.length - 1; i >= 0; i--) {
+      var f = foes[i];
+      if (f.type === 'hawk') {
+        f.ax -= speed * dt;
+        var tta = (f.ax - bird.x) / speed; // detik sampai ruang bebas tepat di depan burung
+        if (f.st === 0 && tta <= LEAD + WARN) { f.st = 1; f.warnT = 0; sfx('screech'); announce('hawk'); }
+        if (f.st === 1) {
+          f.warnT += dt;
+          if (tta <= LEAD) { f.st = 2; f.x = W + 50; f.vx = (f.x - bird.x) / Math.max(0.3, tta); }
+        } else if (f.st === 2) {
+          f.x -= f.vx * dt;
+          if (f.x < -70) { foes.splice(i, 1); continue; }
+        }
+      } else {
+        f.x -= speed * dt;
+        if (f.x < -60) { foes.splice(i, 1); continue; }
+        f.y = f.by + f.amp * Math.sin(t * f.w + f.ph);
+        if (!f.seen && f.x < W - 20) { f.seen = true; announce(f.type); }
+      }
+      if (hitFoe(f)) { die(f.type); return; }
+    }
+  }
+
+  function hitRect(rx, ry, rw, rh) {
+    var cx = Math.max(rx, Math.min(bird.x, rx + rw));
+    var cy = Math.max(ry, Math.min(bird.y, ry + rh));
+    var dx = bird.x - cx, dy = bird.y - cy;
+    return dx * dx + dy * dy < bird.r * bird.r;
+  }
+
+  function update(dt) {
+    flapT += dt;
+    if (flashT > 0) flashT -= dt;
+    if (shakeT > 0) shakeT -= dt;
+    if (scorePop > 0) scorePop = Math.max(0, scorePop - dt * 4);
+    if (notice.t > 0) notice.t -= dt;
+    updateParts(dt);
+
+    if (state === 'ready') {
+      bird.y = PLAY * 0.45 + Math.sin(t * 3.2) * 9;
+      bird.rot = Math.sin(t * 3.2 + 1) * 0.08;
+      groundX += BASE_SPEED * dt;
+      farX += BASE_SPEED * 0.06 * dt;
+      nearX += BASE_SPEED * 0.2 * dt;
+      return;
+    }
+
+    if (state === 'play') {
+      speed = Math.min(BASE_SPEED + score * 2, 190);
+      bird.vy = Math.min(MAXFALL, bird.vy + G * dt);
+      bird.y += bird.vy * dt;
+      if (bird.y - bird.r < 0) { bird.y = bird.r; if (bird.vy < 0) bird.vy = 0; }
+      bird.rot = Math.max(-0.45, Math.min(1.1, bird.vy * 0.0017));
+
+      groundX += speed * dt;
+      farX += speed * 0.06 * dt;
+      nearX += speed * 0.2 * dt;
+
+      for (var i = 0; i < pipes.length; i++) pipes[i].x -= speed * dt;
+      while (pipes.length && pipes[0].x + pipes[0].w < -24) pipes.shift();
+      if (!pipes.length) spawn(FIRST_X);
+      while (pipes[pipes.length - 1].x + SPACING <= W + 200) spawn(pipes[pipes.length - 1].x + SPACING);
+
+      for (var j = 0; j < pipes.length; j++) {
+        var p = pipes[j];
+        if (!p.passed && p.x + p.w / 2 < bird.x) {
+          p.passed = true;
+          score++;
+          scorePop = 1;
+          sfx('score');
+        }
+        var top = p.gapY - p.gap / 2, bot = p.gapY + p.gap / 2;
+        if (hitRect(p.x, -100, p.w, top + 100) || hitRect(p.x, bot, p.w, PLAY - bot)) { die('bambu'); break; }
+      }
+      if (state === 'play') updateFoes(dt);
+      if (state === 'play' && bird.y + bird.r >= PLAY) {
+        bird.y = PLAY - bird.r;
+        die('tanah');
+      }
+      return;
+    }
+
+    // dead: dunia berhenti, burung jatuh sampai tanah
+    deadT += dt;
+    if (!landed) {
+      bird.vy = Math.min(MAXFALL, bird.vy + G * dt);
+      bird.y += bird.vy * dt;
+      bird.rot += (1.5 - bird.rot) * Math.min(1, dt * 6);
+      if (bird.y + bird.r >= PLAY) {
+        bird.y = PLAY - bird.r;
+        bird.vy = 0;
+        landed = true;
+      }
+    }
+  }
+
+  /* ---------- latar ---------- */
+  var clouds = [{ x: 40, y: 150, s: 1 }, { x: 250, y: 214, s: 0.75 }, { x: 330, y: 118, s: 1.1 }, { x: 150, y: 272, s: 0.6 }];
+
+  // debu cahaya yang melayang pelan
+  var motes = [];
+  for (var mi = 0; mi < 30; mi++) {
+    motes.push({ x: Math.random() * W, y: Math.random() * PLAY, r: 0.9 + Math.random() * 1.8,
+      sp: 3 + Math.random() * 7, ph: Math.random() * 6.28, a: 0.25 + Math.random() * 0.4 });
+  }
+
+  // kabut tipis: pita gradien yang bergeser perlahan
+  function mist(y, h, alpha, drift, tint) {
+    var g = ctx.createLinearGradient(0, y - h, 0, y + h);
+    g.addColorStop(0, 'rgba(' + tint + ', 0)');
+    g.addColorStop(0.5, 'rgba(' + tint + ', ' + alpha + ')');
+    g.addColorStop(1, 'rgba(' + tint + ', 0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, y - h, W, h * 2);
+    ctx.fillStyle = 'rgba(' + tint + ', ' + (alpha * 0.55) + ')';
+    for (var i = 0; i < 3; i++) {
+      var mx = ((i * 190 + t * drift) % (W + 260)) - 130;
+      ctx.beginPath();
+      ctx.ellipse(mx, y + Math.sin(i * 2.3) * h * 0.25, 120, h * 0.45, 0, 0, 6.283);
+      ctx.fill();
+    }
+  }
+
+  // selubung akhir: cahaya hangat dari kiri-bawah, kabut tipis, dan vinyet lembut
+  function drawVeil() {
+    var warm = ctx.createLinearGradient(0, 0, 0, PLAY);
+    warm.addColorStop(0, 'rgba(255, 244, 222, 0)');
+    warm.addColorStop(1, 'rgba(255, 205, 150, 0.1)');
+    ctx.fillStyle = warm;
+    ctx.fillRect(0, 0, W, PLAY);
+
+    var bloom = ctx.createRadialGradient(92, 452, 10, 92, 452, 300);
+    bloom.addColorStop(0, 'rgba(255, 236, 190, 0.14)');
+    bloom.addColorStop(1, 'rgba(255, 240, 205, 0)');
+    ctx.fillStyle = bloom;
+    ctx.fillRect(0, 0, W, PLAY);
+
+    for (var i = 0; i < motes.length; i++) {
+      var m = motes[i];
+      var mx = ((m.x - t * m.sp) % (W + 20) + W + 20) % (W + 20) - 10;
+      var my = m.y + Math.sin(t * 0.7 + m.ph) * 6;
+      ctx.globalAlpha = m.a * (0.6 + 0.4 * Math.sin(t * 1.3 + m.ph));
+      ctx.fillStyle = C.sun;
+      ctx.beginPath();
+      ctx.arc(mx, my, m.r, 0, 6.283);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    var vg = ctx.createRadialGradient(W / 2, H * 0.45, H * 0.38, W / 2, H * 0.45, H * 0.82);
+    vg.addColorStop(0, 'rgba(44, 74, 87, 0)');
+    vg.addColorStop(1, 'rgba(44, 74, 87, 0.28)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  var skyGrad = ctx.createLinearGradient(0, 0, 0, PLAY);
+  skyGrad.addColorStop(0, C.skyTop);
+  skyGrad.addColorStop(0.42, C.skyMid);
+  skyGrad.addColorStop(0.8, '#f1d9b0');
+  skyGrad.addColorStop(1, C.skyLow);
+
+  function ridge(base, amp, f1, f2, ph, off, color) {
+    ctx.beginPath();
+    ctx.moveTo(0, PLAY);
+    for (var x = 0; x <= W + 6; x += 6) {
+      var u = x + off;
+      var y = base - amp * (0.55 * Math.sin(u * f1 + ph) + 0.45 * Math.sin(u * f2 + ph * 1.7));
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W, PLAY);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  function drawBackdrop() {
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, W, PLAY);
+
+    var glow = ctx.createRadialGradient(92, 452, 6, 92, 452, 260);
+    glow.addColorStop(0, 'rgba(255, 244, 214, 0.7)');
+    glow.addColorStop(0.35, 'rgba(255, 228, 175, 0.3)');
+    glow.addColorStop(1, 'rgba(255, 232, 190, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 192, W, 352);
+
+    // berkas cahaya tipis yang bernapas pelan
+    ctx.save();
+    ctx.translate(92, 452);
+    for (var r = 0; r < 5; r++) {
+      var ang = -1.35 + r * 0.3;
+      var breath = 0.5 + 0.5 * Math.sin(t * 0.45 + r * 1.4);
+      var rg = ctx.createLinearGradient(0, 0, Math.cos(ang) * 420, Math.sin(ang) * 420);
+      rg.addColorStop(0, 'rgba(255, 244, 214, ' + (0.16 + 0.08 * breath) + ')');
+      rg.addColorStop(1, 'rgba(255, 244, 214, 0)');
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(ang - 0.06) * 420, Math.sin(ang - 0.06) * 420);
+      ctx.lineTo(Math.cos(ang + 0.06) * 420, Math.sin(ang + 0.06) * 420);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+
+    var disc = ctx.createRadialGradient(92, 452, 4, 92, 452, 34);
+    disc.addColorStop(0, '#fffaf0');
+    disc.addColorStop(0.6, C.sun);
+    disc.addColorStop(1, 'rgba(255, 246, 220, 0.5)');
+    ctx.fillStyle = disc;
+    ctx.beginPath();
+    ctx.arc(92, 452, 34, 0, 6.283);
+    ctx.fill();
+
+    ctx.fillStyle = C.cloud;
+    for (var c = 0; c < clouds.length; c++) {
+      var cl = clouds[c];
+      var cx = ((cl.x + t * (5 + c * 2)) % (W + 200)) - 100;
+      ctx.beginPath();
+      ctx.ellipse(cx, cl.y, 44 * cl.s, 9 * cl.s, 0, 0, 6.283);
+      ctx.ellipse(cx - 24 * cl.s, cl.y + 4 * cl.s, 28 * cl.s, 7 * cl.s, 0, 0, 6.283);
+      ctx.ellipse(cx + 28 * cl.s, cl.y + 3 * cl.s, 30 * cl.s, 7 * cl.s, 0, 0, 6.283);
+      ctx.fill();
+    }
+
+    mist(PLAY - 150, 34, 0.12, 3, '255, 248, 236');
+    ridge(PLAY - 48, 26, 0.012, 0.027, 1.2, farX, C.ridgeFar);
+    mist(PLAY - 86, 30, 0.16, 5, '255, 246, 232');
+
+    // gunung berapi: badan terang, sisi kanan lebih gelap
+    ctx.fillStyle = C.volcano;
+    ctx.beginPath();
+    ctx.moveTo(90, PLAY);
+    ctx.bezierCurveTo(170, PLAY - 20, 205, 400, 222, 352);
+    ctx.lineTo(232, 358);
+    ctx.lineTo(246, 350);
+    ctx.bezierCurveTo(262, 400, 300, PLAY - 30, 390, PLAY);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = C.volcanoShade;
+    ctx.beginPath();
+    ctx.moveTo(232, 358);
+    ctx.lineTo(246, 350);
+    ctx.bezierCurveTo(262, 400, 300, PLAY - 30, 390, PLAY);
+    ctx.lineTo(250, PLAY);
+    ctx.bezierCurveTo(250, 460, 240, 400, 232, 358);
+    ctx.closePath();
+    ctx.fill();
+    for (var k = 0; k < 4; k++) {
+      var pr = ((t * 0.1 + k * 0.25) % 1);
+      ctx.globalAlpha = 1 - pr;
+      ctx.fillStyle = C.smoke;
+      ctx.beginPath();
+      ctx.arc(238 + pr * 30 + Math.sin(k * 2 + t) * 3, 346 - pr * 110, 7 + pr * 18, 0, 6.283);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    mist(PLAY - 52, 26, 0.18, 7, '255, 244, 228');
+    ridge(PLAY - 18, 18, 0.02, 0.043, 3.1, nearX, C.ridgeNear);
+  }
+
+  /* ---------- bambu ---------- */
+  function stalk(x, y0, y1, w, hangs) {
+    if (y1 - y0 <= 0) return;
+    var g = ctx.createLinearGradient(x, 0, x + w, 0);
+    g.addColorStop(0, C.bambooDark);
+    g.addColorStop(0.32, C.bamboo);
+    g.addColorStop(0.6, C.bamboo);
+    g.addColorStop(1, C.bambooDark);
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y0, w, y1 - y0);
+    ctx.globalAlpha = 0.45;
+    ctx.fillStyle = C.bambooHi;
+    ctx.fillRect(x + w * 0.2, y0, 5, y1 - y0);
+    ctx.globalAlpha = 1;
+
+    var edge = hangs ? y1 : y0;
+    var dir = hangs ? -1 : 1;
+    for (var k = 1; k < 12; k++) {
+      var ny = edge + dir * k * 62;
+      if (hangs ? ny < y0 + 4 : ny > y1 - 4) break;
+      ctx.fillStyle = C.bambooNode;
+      ctx.fillRect(x - 1, ny - 3, w + 2, 6);
+      if (k === 1) {
+        ctx.save();
+        ctx.translate(x + w - 1, ny);
+        ctx.rotate(hangs ? -0.5 : 0.5);
+        ctx.fillStyle = C.leaf;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(14, -9, 30, 1);
+        ctx.quadraticCurveTo(14, 7, 0, 0);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    // ruas penutup di ujung celah
+    var capY = hangs ? y1 - 18 : y0;
+    var cg = ctx.createLinearGradient(x - 4, 0, x + w + 4, 0);
+    cg.addColorStop(0, C.bambooNode);
+    cg.addColorStop(0.4, C.bambooDark);
+    cg.addColorStop(1, C.bambooNode);
+    rr(x - 4, capY, w + 8, 18, 7);
+    ctx.fillStyle = cg;
+    ctx.fill();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = C.bambooHi;
+    ctx.fillRect(x + 2, capY + 4, 3, 10);
+    ctx.globalAlpha = 1;
+  }
+  function drawBamboo(p) {
+    var top = p.gapY - p.gap / 2, bot = p.gapY + p.gap / 2;
+    stalk(p.x, -10, top, p.w, true);
+    stalk(p.x, bot, PLAY, p.w, false);
+  }
+
+  /* ---------- tanah ---------- */
+  function drawGround() {
+    ctx.fillStyle = C.soil;
+    ctx.fillRect(0, PLAY, W, GROUND);
+    ctx.fillStyle = C.soilDark;
+    var off = groundX % 48;
+    for (var x = -48 - off; x < W + 48; x += 48) {
+      ctx.beginPath();
+      ctx.moveTo(x + 14, PLAY + 28);
+      ctx.lineTo(x + 38, PLAY + 28);
+      ctx.lineTo(x + 26, PLAY + GROUND);
+      ctx.lineTo(x + 2, PLAY + GROUND);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.fillStyle = C.grass;
+    ctx.fillRect(0, PLAY, W, 14);
+    ctx.fillStyle = C.grassDark;
+    ctx.fillRect(0, PLAY + 10, W, 4);
+    var goff = groundX % 24;
+    ctx.fillStyle = C.grass;
+    for (var gx = -24 - goff; gx < W + 24; gx += 24) {
+      ctx.beginPath();
+      ctx.moveTo(gx, PLAY + 1);
+      ctx.lineTo(gx + 4, PLAY - 6);
+      ctx.lineTo(gx + 8, PLAY + 1);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+
+  /* ---------- musuh ---------- */
+  function edgeFill(fill, lw) {
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.lineWidth = lw || 1.5;
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = C.outline;
+    ctx.stroke();
+  }
+
+  function drawBee(x, y) {
+    var fl = Math.sin(t * 55);
+    ctx.save();
+    ctx.translate(x, y);
+    // sayap
+    for (var s = 0; s < 2; s++) {
+      ctx.save();
+      ctx.translate(1 + s * 3, -5);
+      ctx.rotate(-0.5 + s * 0.5 + fl * 0.35);
+      ctx.beginPath();
+      ctx.ellipse(0, -5, 3.8, 7, 0, 0, 6.283);
+      ctx.fillStyle = C.beeWing;
+      ctx.fill();
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = C.outline;
+      ctx.stroke();
+      ctx.restore();
+    }
+    // sengat
+    ctx.beginPath();
+    ctx.moveTo(8, -2); ctx.lineTo(14, 0); ctx.lineTo(8, 2); ctx.closePath();
+    edgeFill(C.beeDark, 1.2);
+    // badan bergaris
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 9.5, 6.5, 0, 0, 6.283);
+    edgeFill(C.bee, 1.5);
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 9.5, 6.5, 0, 0, 6.283);
+    ctx.clip();
+    ctx.fillStyle = C.beeDark;
+    ctx.fillRect(-3, -8, 3, 16);
+    ctx.fillRect(3, -8, 3, 16);
+    ctx.restore();
+    // kepala dan mata
+    ctx.beginPath();
+    ctx.arc(-9, 0, 4.4, 0, 6.283);
+    edgeFill(C.beeDark, 1.2);
+    ctx.fillStyle = C.ink;
+    ctx.beginPath();
+    ctx.arc(-10.5, -1, 1.5, 0, 6.283);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawBat(x, y) {
+    var fl = Math.sin(t * 9 + x * 0.05) * 11;
+    ctx.save();
+    ctx.translate(x, y);
+    for (var s = -1; s <= 1; s += 2) {
+      ctx.save();
+      ctx.scale(s, 1);
+      ctx.beginPath();
+      ctx.moveTo(4, -3);
+      ctx.quadraticCurveTo(13, -13 + fl, 27, -6 + fl * 1.2);
+      ctx.quadraticCurveTo(23, 3 + fl * 0.5, 19, 2 + fl * 0.3);
+      ctx.quadraticCurveTo(15, 9 + fl * 0.15, 11, 5);
+      ctx.quadraticCurveTo(8, 10, 5, 8);
+      ctx.closePath();
+      edgeFill(C.batWing, 1.4);
+      ctx.restore();
+    }
+    // telinga, badan, kepala
+    ctx.beginPath();
+    ctx.moveTo(-5, -13); ctx.lineTo(-4, -20); ctx.lineTo(-1, -14);
+    ctx.moveTo(5, -13); ctx.lineTo(4, -20); ctx.lineTo(1, -14);
+    edgeFill(C.bat, 1.3);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 6.5, 9, 0, 0, 6.283);
+    edgeFill(C.bat, 1.5);
+    ctx.beginPath();
+    ctx.arc(0, -9, 5.4, 0, 6.283);
+    edgeFill(C.bat, 1.5);
+    ctx.fillStyle = C.warn;
+    ctx.beginPath();
+    ctx.arc(-2.2, -9.4, 1.3, 0, 6.283);
+    ctx.arc(2.2, -9.4, 1.3, 0, 6.283);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawHawk(x, y) {
+    var fl = Math.sin(t * 11);
+    ctx.save();
+    ctx.translate(x, y);
+    function wingAt(a, col, tipCol) {
+      ctx.save();
+      ctx.translate(-2, -3);
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.ellipse(16, 0, 17, 5.6, 0, 0, 6.283);
+      edgeFill(col, 1.5);
+      ctx.beginPath();
+      ctx.ellipse(28, 0, 6, 4.4, 0, 0, 6.283);
+      ctx.fillStyle = tipCol;
+      ctx.fill();
+      ctx.restore();
+    }
+    wingAt((-0.35 + fl * 0.9) * 0.8 - 0.15, C.hawkWing, C.hawkTip);
+    // ekor
+    ctx.beginPath();
+    ctx.moveTo(12, -3); ctx.lineTo(31, -7); ctx.lineTo(31, 6); ctx.lineTo(12, 4); ctx.closePath();
+    edgeFill(C.hawkBody, 1.5);
+    // badan
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 17, 8.5, 0, 0, 6.283);
+    edgeFill(C.hawkBody, 1.5);
+    ctx.fillStyle = C.hawkHead;
+    ctx.beginPath();
+    ctx.ellipse(-8, 1.5, 8, 5.4, 0, 0, 6.283);
+    ctx.fill();
+    // kepala putih dan paruh
+    ctx.beginPath();
+    ctx.moveTo(-22, -2); ctx.lineTo(-31, 2); ctx.lineTo(-22, 3.5); ctx.closePath();
+    edgeFill(C.bee, 1.3);
+    ctx.beginPath();
+    ctx.arc(-17, -2, 7, 0, 6.283);
+    edgeFill(C.hawkHead, 1.5);
+    ctx.fillStyle = C.inkShadow;
+    ctx.beginPath();
+    ctx.arc(-19.5, -3.4, 1.6, 0, 6.283);
+    ctx.fill();
+    wingAt(-0.35 + fl * 0.9, C.hawkBody, C.hawkTip);
+    ctx.restore();
+  }
+
+  function drawFoes() {
+    for (var i = 0; i < foes.length; i++) {
+      var f = foes[i];
+      if (f.type === 'bee') drawBee(foeX(f), f.y);
+      else if (f.type === 'bat') drawBat(f.x, f.y);
+      else if (f.st === 2) drawHawk(f.x, f.y);
+    }
+  }
+  // jalur dan tanda seru: terlihat selama peringatan elang
+  function drawWarns() {
+    for (var i = 0; i < foes.length; i++) {
+      var f = foes[i];
+      if (f.type !== 'hawk' || f.st !== 1) continue;
+      var pulse = 0.5 + 0.5 * Math.sin(f.warnT * (f.warnT > 0.55 ? 28 : 12));
+      ctx.globalAlpha = 0.08 + 0.1 * pulse;
+      ctx.fillStyle = C.warn;
+      ctx.fillRect(0, f.y - 16, W, 32);
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(W - 26, f.y, 14 + pulse * 2, 0, 6.283);
+      ctx.fillStyle = C.warn;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = C.ink;
+      ctx.stroke();
+      txt('!', W - 26, f.y + 8, 22, { font: BODY, weight: '700', color: C.ink });
+    }
+  }
+
+  /* ---------- burung ---------- */
+  function drawBird() {
+    var wingAng;
+    if (state === 'dead') wingAng = 0.9;
+    else if (state === 'ready') wingAng = Math.sin(t * 9) * 0.55;
+    else wingAng = flapT < 0.32 ? Math.sin(flapT * 36) * 0.75 : -0.1;
+    var sway = Math.sin(t * 6) * 3 - clamp(bird.vy, -300, 300) * 0.015;
+
+    ctx.save();
+    ctx.translate(bird.x, bird.y);
+    ctx.rotate(bird.rot);
+    drawBirdSkin(ctx, SKINS[skinIdx], wingAng, state === 'dead', sway);
+    ctx.restore();
+  }
+
+  function drawParts() {
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      var a = clamp(p.life / p.max, 0, 1);
+      ctx.globalAlpha = a * p.a;
+      if (p.type === 'puff') {
+        ctx.fillStyle = C.ink;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * (1.4 - a * 0.4), 0, 6.283);
+        ctx.fill();
+      } else {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.r * 1.7, p.r * 0.75, 0, 0, 6.283);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ---------- teks dan panel ---------- */
+  function txt(s, x, y, size, o) {
+    o = o || {};
+    ctx.font = (o.weight ? o.weight + ' ' : '') + size + 'px ' + (o.font || DISPLAY);
+    ctx.textAlign = o.align || 'center';
+    ctx.textBaseline = 'alphabetic';
+    if (o.stroke) {
+      ctx.lineJoin = 'round';
+      ctx.lineWidth = o.stroke;
+      ctx.strokeStyle = C.inkShadow;
+      ctx.strokeText(s, x, y);
+    }
+    if (o.shadow) {
+      var a = ctx.globalAlpha;
+      ctx.globalAlpha = a * 0.5;
+      ctx.fillStyle = C.inkShadow;
+      ctx.fillText(s, x, y + o.shadow);
+      ctx.globalAlpha = a;
+    }
+    ctx.fillStyle = o.color || C.ink;
+    ctx.fillText(s, x, y);
+  }
+  function rr(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawReady() {
+    txt('Kutilang', W / 2, 120, 52, { shadow: 4, stroke: 7 });
+    txt('Melesat', W / 2, 174, 52, { shadow: 4, stroke: 7, color: C.bamboo });
+
+    rr(W / 2 - 112, 304, 224, 88, 18);
+    ctx.fillStyle = C.panelSoft;
+    ctx.fill();
+    ctx.globalAlpha = 0.7 + 0.3 * Math.sin(t * 4);
+    txt('Ketuk untuk terbang', W / 2, 340, 21, { font: BODY, weight: '700' });
+    ctx.globalAlpha = 1;
+    txt('atau tekan Spasi', W / 2, 362, 14, { font: BODY, weight: '600', color: C.ink });
+    if (best > 0) txt('Rekormu: ' + best + ' rumpun', W / 2, 382, 14, { font: BODY, weight: '700', color: C.sun });
+  }
+
+  function drawScore() {
+    var size = 62 * (1 + 0.16 * scorePop);
+    txt(String(score), W / 2, 100, size, { shadow: 4, stroke: 8 });
+  }
+
+  function drawNotice() {
+    if (notice.t <= 0) return;
+    var a = Math.max(0, Math.min(1, notice.t / 0.3, (1.8 - notice.t) / 0.2));
+    ctx.globalAlpha = a;
+    rr(W / 2 - 82, 122, 164, 32, 16);
+    ctx.fillStyle = C.panel;
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = C.warn;
+    ctx.stroke();
+    txt(notice.text, W / 2, 143, 15, { font: BODY, weight: '700', color: C.ink });
+    ctx.globalAlpha = 1;
+  }
+
+  function drawPanel() {
+    var k = Math.min(1, Math.max(0, (deadT - 0.3) / 0.25));
+    if (k <= 0) return;
+    var e = 1 - Math.pow(1 - k, 3);
+    var pw = 240, ph = 250, px = (W - pw) / 2, py = 140;
+    ctx.save();
+    ctx.globalAlpha = e;
+    ctx.translate(W / 2, py + ph / 2);
+    ctx.scale(0.9 + 0.1 * e, 0.9 + 0.1 * e);
+    ctx.translate(-W / 2, -(py + ph / 2));
+
+    rr(px, py, pw, ph, 20);
+    ctx.fillStyle = C.panel;
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = C.panelLine;
+    ctx.stroke();
+
+    txt(TITLE[cause] || 'Jatuh!', W / 2, py + 52, 38, { color: C.ink });
+    txt(CAUSE[cause] || '', W / 2, py + 74, 14, { font: BODY, weight: '600', color: C.sun });
+
+    txt('SKOR', px + pw * 0.27, py + 110, 13, { font: BODY, weight: '700', color: C.sun });
+    txt('TERBAIK', px + pw * 0.73, py + 110, 13, { font: BODY, weight: '700', color: C.sun });
+    txt(String(score), px + pw * 0.27, py + 160, 46, { color: C.ink });
+    txt(String(best), px + pw * 0.73, py + 160, 46, { color: newBest ? C.bamboo : C.ink });
+    txt('rumpun bambu terlewati', W / 2, py + 186, 14, { font: BODY, weight: '600', color: C.ink });
+
+    if (deadT > 0.55) {
+      ctx.globalAlpha = e * (0.7 + 0.3 * Math.sin(t * 4));
+      txt('Ketuk untuk main lagi', W / 2, py + 228, 17, { font: BODY, weight: '700', color: C.ink });
+      ctx.globalAlpha = e;
+    }
+
+    if (newBest) {
+      var bw = 118, bh = 26, bx = W / 2 - bw / 2, by = py - 13;
+      rr(bx, by, bw, bh, 13);
+      ctx.fillStyle = C.bamboo;
+      ctx.fill();
+      txt('Rekor baru!', W / 2, by + 18, 14, { font: BODY, weight: '700', color: C.inkShadow });
+    }
+    ctx.restore();
+  }
+
+  /* ---------- render dan loop ---------- */
+  function render() {
+    ctx.setTransform(sx, 0, 0, sy, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.save();
+    if (shakeT > 0 && !reduced) {
+      var m = 4 * (shakeT / 0.25);
+      ctx.translate((Math.random() - 0.5) * 2 * m, (Math.random() - 0.5) * 2 * m);
+    }
+    drawBackdrop();
+    for (var i = 0; i < pipes.length; i++) drawBamboo(pipes[i]);
+    mist(PLAY - 14, 34, 0.18, 9, '255, 246, 232');
+    drawGround();
+    drawWarns();
+    drawFoes();
+    drawBird();
+    drawParts();
+    ctx.restore();
+    drawVeil();
+
+    if (state === 'ready') drawReady();
+    else if (state === 'play') { drawScore(); drawNotice(); }
+    else drawPanel();
+
+    if (flashT > 0 && !reduced) {
+      ctx.globalAlpha = Math.max(0, flashT / 0.22) * 0.5;
+      ctx.fillStyle = C.ink;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  var last = performance.now();
+  function frame(now) {
+    var dt = Math.min(0.033, Math.max(0, (now - last) / 1000));
+    last = now;
+    t += dt;
+    update(dt);
+    render();
+    var showPicker = state === 'ready' || (state === 'dead' && deadT > 0.5);
+    if (picker.hidden === showPicker) picker.hidden = !showPicker;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+</script>
+
+</body></html>
